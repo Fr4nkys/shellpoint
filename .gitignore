@@ -1,0 +1,45 @@
+# ============================================
+#  ShellPoint — .gitignore
+# ============================================
+
+# Dependencies — run `npm install` to restore
+node_modules/
+
+# Build output
+dist/
+
+# Old backup folders (dev artifacts)
+src_backup_broken/
+src_backup_stable/
+
+# Pre-built portable ZIPs — distribute via GitHub Releases, not the repo
+*.zip
+*.exe
+*.dmg
+*.AppImage
+
+# Electron-builder cache
+.webpack/
+
+# OS metadata
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Editor folders
+.vscode/
+.idea/
+
+# Environment / secrets (never commit these)
+.env
+.env.*
+*.pem
+*.key
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temp files
+*.tmp
+*.bak

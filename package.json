@@ -1,0 +1,56 @@
+{
+  "name": "shellpoint",
+  "version": "1.0.8",
+  "description": "Professional SSH manager and SFTP client built specifically for Check Point firewall engineers",
+  "main": "main.js",
+  "homepage": "https://github.com/Fr4nkys/shellpoint",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fr4nkys/shellpoint.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.shellpoint.app",
+    "productName": "ShellPoint",
+    "copyright": "© 2025 Alexandro Michel Davide — franksec.com",
+    "icon": "src/assets/logo.png",
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "zip",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "ShellPoint-v${version}-win-x64.zip"
+    },
+    "compression": "maximum"
+  },
+  "author": {
+    "name": "Alexandro Michel Davide",
+    "email": "",
+    "url": "https://franksec.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-web-links": "^0.12.0",
+    "@xterm/xterm": "^6.0.0",
+    "electron-store": "^7.0.3",
+    "keytar": "^7.9.0",
+    "ssh2": "^1.15.0"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}

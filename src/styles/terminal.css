@@ -1,0 +1,22 @@
+/* Terminal specific CSS overrides (since we import xterm.css) */
+.xterm {
+  height: 100%;
+  padding: 8px;
+}
+
+.xterm-viewport {
+  /* custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #555 #1e1e1e;
+}
+
+.xterm-viewport::-webkit-scrollbar {
+  width: 8px;
+}
+.xterm-viewport::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 4px;
+}

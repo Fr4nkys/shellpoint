@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShellPoint — SSH Manager for Check Point</title>
+  <link rel="stylesheet" href="../node_modules/@xterm/xterm/css/xterm.css" />
+  <link rel="stylesheet" href="styles/app.css" />
+  <link rel="stylesheet" href="styles/terminal.css" />
+</head>
+<body>
+  <div class="titlebar">
+    <div class="titlebar-nav">
+      <button id="btn-home" class="btn-titlebar" title="Home">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg> Home
+      </button>
+      <button id="btn-open-sk" class="btn-titlebar" title="Check Point Knowledge Base">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> Guides & SK
+      </button>
+      <button id="btn-open-sftp" class="btn-titlebar" title="SFTP File Manager">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> SFTP
+      </button>
+      <button id="btn-open-settings" class="btn-titlebar" title="Appearance Settings">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Settings
+      </button>
+    </div>
+    <div class="titlebar-drag-region"></div>
+  </div>
+  <div class="app-container">
+
+    <!-- Sidebar Left: Hosts -->
+    <aside class="sidebar-left">
+      <div class="sidebar-brand" id="brand-logo-btn" style="cursor: pointer;" title="About ShellPoint">
+        <div class="brand-logo">
+          <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 5 L93.3 30 L93.3 70 L50 95 L6.7 70 L6.7 30 Z" stroke="var(--accent)" stroke-width="8" stroke-linejoin="round"/>
+            <path d="M35 35 L50 50 L35 65" stroke="var(--text-h)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="55" y1="65" x2="70" y2="65" stroke="var(--text-h)" stroke-width="8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">ShellPoint</span>
+          <span class="brand-sub">Check Point SSH Manager</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section-header">
+        <span>HOSTS</span>
+        <button id="btn-add-host" class="btn-icon" title="Add Host">+</button>
+      </div>
+      <div class="host-list" id="host-list"></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Tab Bar -->
+      <div class="tabs-bar" id="tabs-bar">
+        <div class="tabs-bar-empty" id="tabs-empty-msg">
+          <input type="text" id="quick-connect-input" placeholder="Quick connect (e.g. admin@10.0.0.1 or just 10.0.0.1)..." />
+          <span style="margin-left: 10px; font-size: 11px; opacity: 0.5;">Press Enter to connect</span>
+        </div>
+      </div>
+      <!-- Terminals -->
+      <div class="terminals-container" id="terminals-container">
+        <!-- Welcome Screen -->
+        <div class="welcome-screen" id="welcome-screen">
+          <div class="welcome-icon">
+            <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 20px;">
+              <path d="M50 5 L93.3 30 L93.3 70 L50 95 L6.7 70 L6.7 30 Z" stroke="var(--accent)" stroke-width="6" stroke-linejoin="round"/>
+              <path d="M35 35 L50 50 L35 65" stroke="var(--text-h)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="55" y1="65" x2="70" y2="65" stroke="var(--text-h)" stroke-width="6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h1>ShellPoint</h1>
+          <p>SSH Manager for Check Point Firewalls</p>
+          <div class="welcome-tips">
+
+            <div class="tip tip-action" id="tip-add-host">
+              <div class="tip-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+              </div>
+              <div class="tip-body">
+                <span class="tip-title">Add a host</span>
+                <span class="tip-desc">Click the <strong>+</strong> button in the left sidebar to add a Check Point firewall with its IP address, username and password.</span>
+              </div>
+              <div class="tip-arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </div>
+            </div>
+
+            <div class="tip tip-action" id="tip-connect">
+              <div class="tip-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 2 12 11 3 20 12 17 12"></polyline><polyline points="11 3 11 21"></polyline></svg>
+              </div>
+              <div class="tip-body">
+                <span class="tip-title">Connect to a firewall</span>
+                <span class="tip-desc"><strong>Double-click</strong> a host in the left sidebar to open an interactive SSH terminal session.</span>
+              </div>
+              <div class="tip-arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </div>
+            </div>
+
+            <div class="tip tip-action" id="tip-commands">
+              <div class="tip-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+              </div>
+              <div class="tip-body">
+                <span class="tip-title">Use CP commands</span>
+                <span class="tip-desc">Click any command in the right sidebar to instantly send it to the active SSH terminal.</span>
+              </div>
+              <div class="tip-arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+
+        <!-- SFTP Inline Panel -->
+        <div class="sftp-panel hidden" id="sftp-panel">
+          <!-- Toolbar -->
+          <div class="sftp-toolbar">
+            <span class="sftp-panel-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              SFTP
+            </span>
+            <div class="sftp-breadcrumb" id="sftp-breadcrumb"></div>
+            <div class="sftp-toolbar-right">
+              <button id="btn-sftp-up" class="sftp-tool-btn" title="Go up">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+              </button>
+              <button id="btn-sftp-refresh" class="sftp-tool-btn" title="Refresh">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              </button>
+              <button id="btn-sftp-upload-file" class="sftp-tool-btn sftp-tool-btn-accent" title="Upload file">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              </button>
+              <input type="file" id="sftp-upload-input" multiple style="display:none" />
+              <button id="btn-sftp-back" class="sftp-tool-btn sftp-close-btn" title="Close SFTP panel">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+          </div>
+          <!-- Path bar -->
+          <div class="sftp-pathbar">
+            <input type="text" id="sftp-path" class="sftp-path-input" value="/home/admin" placeholder="/path" />
+          </div>
+
+          <!-- File List Drop Zone -->
+          <div class="sftp-body" id="sftp-drop-zone">
+            <div class="sftp-file-list" id="sftp-file-list"></div>
+            <div class="sftp-drop-overlay hidden" id="sftp-drop-overlay">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;opacity:0.7;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Drop files to upload</span>
+            </div>
+          </div>
+
+          <!-- Transfer Status Bar -->
+          <div class="sftp-statusbar" id="sftp-statusbar">
+            <span class="sftp-status-text" id="sftp-status-msg">Ready</span>
+            <div class="sftp-progress-wrap hidden" id="sftp-progress-wrap">
+              <div class="sftp-progress-bar" id="sftp-progress-bar"></div>
+              <span class="sftp-progress-label" id="sftp-progress-label">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Sidebar Right: CP Commands -->
+    <aside class="sidebar-right">
+      <div class="sidebar-section-header">
+        <span>CP COMMANDS</span>
+      </div>
+      <div class="cmd-search-wrap">
+        <input type="text" id="cmd-search" placeholder="🔍 Search commands..." />
+      </div>
+      <div class="command-list" id="command-list"></div>
+    </aside>
+
+  </div>
+
+  <!-- ==================== Add/Edit Host Modal ==================== -->
+  <div id="modal-host" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-host-title">Add Host</h3>
+        <button class="modal-close" id="btn-host-cancel">&times;</button>
+      </div>
+      <form id="form-host">
+        <input type="hidden" id="host-id" />
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Customer</label>
+            <input type="text" id="host-customer" placeholder="e.g. Acme Corp" required list="datalist-customers" />
+            <datalist id="datalist-customers"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Cluster / Site</label>
+            <input type="text" id="host-cluster" placeholder="e.g. Main Datacenter" required list="datalist-clusters" />
+            <datalist id="datalist-clusters"></datalist>
+          </div>
+        </div>
+
+        <div class="form-row" style="align-items: center; gap: 15px; margin-bottom: 15px;">
+          <div class="host-img-preview" id="host-img-preview-container">
+            <img id="host-image-preview" src="" style="display:none; width: 48px; height: 48px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-l);">
+            <div id="host-image-placeholder" style="width: 48px; height: 48px; border-radius: 8px; background: var(--bg-active); border: 1px solid var(--border-l); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 20px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </div>
+          </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label>Custom Host Image <span class="text-muted">(optional)</span></label>
+            <input type="file" id="host-image" accept="image/png, image/jpeg, image/svg+xml, image/webp" style="font-size: 12px;" />
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-remove-host-image" style="display:none; margin-top: 5px; font-size: 11px; padding: 2px 8px;">Remove Image</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Display Name</label>
+          <input type="text" id="host-name" placeholder="Firewall-01-Prod" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Hostname / IP</label>
+            <input type="text" id="host-ip" placeholder="192.168.1.1" required />
+          </div>
+          <div class="form-group form-group-sm">
+            <label>Port</label>
+            <input type="number" id="host-port" value="22" min="1" max="65535" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="host-user" placeholder="admin" required />
+        </div>
+        <div class="form-group">
+          <label>Password <span class="text-muted">(stored in Windows Credential Store)</span></label>
+          <input type="password" id="host-password" placeholder="••••••••" autocomplete="new-password" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Authentication Mode</label>
+            <select id="host-auth-type" style="background:var(--bg-active);color:var(--text-h);border:1px solid var(--border-l);border-radius:6px;padding:7px 10px;font-size:12px;width:100%;outline:none;">
+              <option value="password">🔑 Password only</option>
+              <option value="push-2fa">📲 Push 2FA (Duo / RADIUS push)</option>
+              <option value="otp-2fa">🔐 OTP / Token (enter code at login)</option>
+            </select>
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:2px;">
+            <span id="auth-type-hint" style="font-size:11px;color:var(--text-muted);line-height:1.5;"></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Private Key Path <span class="text-muted">(optional)</span></label>
+          <input type="text" id="host-key" placeholder="C:\Users\...\.ssh\id_rsa" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Web UI Port <span class="text-muted">(Gaia Portal)</span></label>
+            <input type="number" id="host-webui-port" placeholder="4434" value="4434" min="1" max="65535" />
+          </div>
+          <div class="form-group" style="display:flex; align-items:flex-end; padding-bottom:2px;">
+            <span style="font-size:11px; color:var(--text-muted); line-height:1.4;">Used for right-click<br>→ Open Gaia Portal</span>
+          </div>
+        </div>
+        <div class="modal-actions" style="display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" id="btn-host-delete" class="btn btn-secondary" style="background: var(--red); color: white; display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Delete
+          </button>
+          <div style="display: flex; gap: 10px; margin-left: auto;">
+            <button type="button" id="btn-host-cancel-2" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Save Host
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== Command Params Modal ==================== -->
+  <div id="modal-cmd" class="modal hidden">
+    <div class="modal-content modal-content-sm">
+      <div class="modal-header">
+        <div>
+          <h3 id="modal-cmd-title">Command Parameters</h3>
+          <code id="modal-cmd-desc" class="cmd-preview"></code>
+        </div>
+        <button class="modal-close" id="btn-cmd-cancel">&times;</button>
+      </div>
+      <form id="form-cmd">
+        <div id="cmd-params-container"></div>
+        <div class="modal-actions">
+          <button type="button" id="btn-cmd-cancel-2" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Insert Command
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== Flags Builder Modal (tcpdump / fw monitor) ==================== -->
+  <div id="modal-flags" class="modal hidden">
+    <div class="modal-content modal-flags-content">
+      <div class="modal-header">
+        <div class="modal-header-info">
+          <h3 id="modal-flags-title">Command Builder</h3>
+          <code id="modal-flags-preview" class="cmd-live-preview"></code>
+        </div>
+        <button class="modal-close" id="btn-flags-close">&times;</button>
+      </div>
+      <div class="flags-list" id="flags-list">
+        <!-- Flag rows rendered dynamically -->
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="btn-flags-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btn-flags-insert">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Insert Command
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Knowledge Base (SK) Modal ==================== -->
+  <div id="modal-sk" class="modal hidden">
+    <div class="modal-content modal-sk-content">
+      <div class="modal-header">
+        <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px; vertical-align: text-bottom;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> Check Point Guides & SK Center</h3>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn btn-sm btn-secondary" id="btn-add-custom-sk" style="padding: 4px 8px; font-size: 12px; height: 24px;">+ My SK</button>
+          <button class="modal-close" id="btn-sk-close" style="position:static;">&times;</button>
+        </div>
+      </div>
+      <div class="sk-list" id="sk-list">
+        <!-- SK categories rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Custom SK Modal ==================== -->
+  <div id="modal-custom-sk" class="modal hidden">
+    <div class="modal-content modal-content-sm">
+      <div class="modal-header">
+        <h3>Add Custom SK</h3>
+        <button class="modal-close" id="btn-custom-sk-close">&times;</button>
+      </div>
+      <form id="form-custom-sk">
+        <input type="hidden" id="custom-sk-id" />
+        <div class="form-group">
+          <label>Title / Name</label>
+          <input type="text" id="custom-sk-title" placeholder="e.g. My Important SK" required />
+        </div>
+        <div class="form-group">
+          <label>SK Number</label>
+          <input type="text" id="custom-sk-code" placeholder="e.g. sk123456" required />
+        </div>
+        <div class="modal-actions" style="display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" id="btn-custom-sk-delete" class="btn btn-secondary" style="background: var(--red); color: white; display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Delete
+          </button>
+          <div style="display: flex; gap: 10px; margin-left: auto;">
+            <button type="button" id="btn-custom-sk-cancel" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== Settings Modal ==================== -->
+  <div id="modal-settings" class="modal hidden">
+    <div class="modal-content modal-content-sm">
+      <div class="modal-header">
+        <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px; vertical-align: text-bottom;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Terminal Settings</h3>
+        <button class="modal-close" id="btn-settings-close">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Terminal Font Size</label>
+        <div class="range-wrap">
+          <input type="range" id="setting-font-size" min="10" max="22" value="14" />
+          <span id="font-size-val">14px</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Theme Accent Color</label>
+        <div class="color-presets">
+          <div class="color-option" data-color="#E51261" style="background:#E51261" title="CP Pink"></div>
+          <div class="color-option" data-color="#e8192c" style="background:#e8192c" title="CP Red"></div>
+          <div class="color-option" data-color="#4d9eff" style="background:#4d9eff" title="Zsh Agnostic Blue"></div>
+          <div class="color-option" data-color="#4ec94e" style="background:#4ec94e" title="Hacker Green"></div>
+          <div class="color-option" data-color="#E95420" style="background:#E95420" title="Ubuntu Orange"></div>
+          <div class="color-option" data-color="#7B68EE" style="background:#7B68EE" title="Kali Dragon"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btn-settings-save" class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Custom Command Modal ==================== -->
+  <div id="modal-custom-cmd" class="modal hidden">
+    <div class="modal-content modal-content-sm">
+      <div class="modal-header">
+        <h3>Custom Command</h3>
+        <button class="modal-close" id="btn-custom-cmd-close">&times;</button>
+      </div>
+      <form id="form-custom-cmd">
+        <input type="hidden" id="custom-cmd-id" />
+        <div class="form-group">
+          <label>Name / Label</label>
+          <input type="text" id="custom-cmd-label" placeholder="e.g. Show connections" required />
+        </div>
+        <div class="form-group">
+          <label>Command</label>
+          <input type="text" id="custom-cmd-cmd" placeholder="e.g. fw tab -t connections -s" required />
+        </div>
+        <div class="form-group">
+          <label>Description <span class="text-muted">(optional)</span></label>
+          <input type="text" id="custom-cmd-desc" placeholder="e.g. Connection table statistics" />
+        </div>
+        <div class="modal-actions" style="display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" id="btn-custom-cmd-delete" class="btn btn-secondary" style="background: var(--red); color: white; display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Delete
+          </button>
+          <div style="display: flex; gap: 10px; margin-left: auto;">
+            <button type="button" id="btn-custom-cmd-cancel" class="btn btn-secondary" onclick="closeCustomCmdModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ==================== First Welcome Modal ==================== -->
+  <div id="modal-first-welcome" class="modal hidden" style="z-index: 10000;">
+    <div class="modal-content modal-content-sm" style="text-align: center; padding: 40px 20px;">
+      <h2 style="color: var(--accent); margin-bottom: 15px; font-weight: 700;">Welcome to ShellPoint!</h2>
+      <p style="margin-bottom: 25px; font-size: 14px; line-height: 1.6; color: var(--text-h);">
+        Thank you for using ShellPoint!<br/>
+        Please consider giving this project a star ⭐
+      </p>
+      <p style="margin-bottom: 30px; font-size: 12px; color: var(--text-muted);">
+        Developed by <a href="#" onclick="require('electron').shell.openExternal('https://www.linkedin.com/in/alexandro-davide-b37b9a191/'); return false;" style="color: var(--blue); text-decoration: none; font-weight: 600;">Alexandro Michel Davide</a>
+      </p>
+      <button class="btn btn-primary" id="btn-welcome-close" style="width: 100%;">Let's Start 🚀</button>
+    </div>
+  </div>
+
+  <!-- ==================== About Modal ==================== -->
+  <div id="modal-about" class="modal hidden" style="z-index: 10000;">
+    <div class="modal-content modal-content-sm" style="text-align: center; padding: 40px 20px;">
+      <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+        <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 5 L93.3 30 L93.3 70 L50 95 L6.7 70 L6.7 30 Z" stroke="var(--accent)" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M35 35 L50 50 L35 65" stroke="var(--text-h)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="55" y1="65" x2="70" y2="65" stroke="var(--text-h)" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 style="color: var(--accent); margin-bottom: 10px; font-weight: 700;">ShellPoint</h2>
+      <p style="margin-bottom: 25px; font-size: 14px; line-height: 1.6; color: var(--text-h);">
+        SSH Manager for Check Point Firewalls
+      </p>
+      <p style="margin-bottom: 8px; font-size: 13px; color: var(--text-muted);">
+        Developed by
+      </p>
+      <p style="margin-bottom: 28px;">
+        <a href="#"
+           onclick="require('electron').shell.openExternal('https://www.linkedin.com/in/alexandro-davide-b37b9a191/'); return false;"
+           style="color: var(--blue); text-decoration: none; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;"
+           title="Open LinkedIn profile">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+          </svg>
+          Alexandro Michel Davide
+        </a>
+      </p>
+      <p style="margin-bottom: 28px;">
+        <a href="#"
+           onclick="require('electron').shell.openExternal('https://franksec.com'); return false;"
+           style="color: var(--text-muted); text-decoration: none; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; transition: color 0.15s;"
+           onmouseover="this.style.color='var(--blue)'" onmouseout="this.style.color='var(--text-muted)'"
+           title="Open franksec.com">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          franksec.com
+        </a>
+      </p>
+      <button class="btn btn-primary" id="btn-about-close" style="width: 100%;">Close</button>
+
+    </div>
+  </div>
+
+  <!-- ==================== Quick Connect Password Modal ==================== -->
+  <div id="modal-qc-password" class="modal hidden" style="z-index: 10000;">
+    <div class="modal-content modal-content-sm">
+      <div class="modal-header">
+        <h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:text-bottom;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Quick Connect
+        </h3>
+        <button class="modal-close" id="btn-qc-password-cancel">&times;</button>
+      </div>
+      <form id="form-qc-password">
+        <p id="qc-password-desc" style="font-size:12px;color:var(--text-muted);margin-bottom:14px;"></p>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="qc-password-input" placeholder="••••••••" autocomplete="current-password" required />
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="btn-qc-password-cancel-2" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:text-bottom;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Connect
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MFA / OTP Modal ==================== -->
+  <div id="modal-mfa" class="modal hidden" style="z-index: 10001;">
+    <div class="modal-content modal-content-sm">
+      <div class="modal-header">
+        <h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:text-bottom;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+          MFA / 2FA Authentication
+        </h3>
+      </div>
+      <form id="form-mfa">
+        <p id="mfa-prompt-text" style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;"></p>
+        <div class="form-group">
+          <label>Code / Token</label>
+          <input type="text" id="mfa-code-input" placeholder="123456" autocomplete="one-time-code"
+                 inputmode="numeric" maxlength="16"
+                 style="font-size:20px;letter-spacing:6px;text-align:center;font-family:var(--font-mono);" required />
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary" style="width:100%;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:text-bottom;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Verify &amp; Connect
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="data/checkpoint-commands.js"></script>
+  <script src="data/checkpoint-sk.js"></script>
+  <script src="renderer.js"></script>
+
+</body>
+</html>
