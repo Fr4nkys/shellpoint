@@ -7,7 +7,7 @@
 **Professional SSH Manager & SFTP Client for Check Point Firewall Engineers**
 
 [![Version](https://img.shields.io/badge/version-1.0.8-E51261?style=flat-square)](#)
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4?style=flat-square&logo=windows)](#)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-0078d4?style=flat-square&logo=windows)](#)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Check Mates](https://img.shields.io/badge/community-Check%20Mates-red?style=flat-square)](https://community.checkpoint.com)
 
@@ -29,7 +29,7 @@
 | **Knowledge Base** | Quick links to Check Point SK articles |
 | **Host Management** | Customer/cluster grouping, right-click context menus, Gaia Portal shortcut |
 | **UI** | Dark mode, right-click copy/paste in terminal, web UI port launcher |
-| **Security** | Credentials stored in Windows Credential Manager (not plain text) |
+| **Security** | Credentials stored in OS Secure Credential Store (not plain text) |
 | **Portable** | Single zip, no installation — runs from any folder or USB drive |
 
 ---
@@ -59,14 +59,16 @@ npm install
 npm start
 ```
 
-### Build a Portable Zip
+### Build Portable Package
 
 ```bash
 npm run dist
-# Output → dist/ShellPoint-v1.0.8-win-x64.zip
+# Output → dist/ShellPoint-v1.0.8-[win|linux].[zip|AppImage]
 ```
 
-Or use the included `build.bat` on Windows.
+Or use the included scripts:
+- **Windows:** `build.bat`
+- **Linux:** `./build.sh`
 
 ---
 
@@ -74,7 +76,7 @@ Or use the included `build.bat` on Windows.
 
 | | Requirement |
 |---|---|
-| **OS** | Windows 10 / 11 (x64) |
+| **OS** | Windows 10 / 11 (x64), Linux (Ubuntu/Debian/RHEL/AppImage) |
 | **RAM** | ~150 MB |
 | **Disk** | ~350 MB (extracted) |
 | **Network** | Direct access to firewall management IP |
@@ -165,16 +167,15 @@ Custom commands can be added and organized by category.
 
 All user data is stored locally on your machine:
 
-```
-%APPDATA%\ShellPoint\
-```
+- **Windows:** `%APPDATA%\ShellPoint\`
+- **Linux:** `~/.config/ShellPoint/`
 
 | File | Content |
 |---|---|
 | `config.json` | Hosts, custom commands, settings |
-| Windows Credential Manager | SSH passwords (encrypted by the OS) |
+| OS Keychain | SSH passwords (encrypted by the OS) |
 
-To fully reset the app: close it, delete `%APPDATA%\ShellPoint\`, and re-launch.
+To fully reset the app: close it, delete the folder above, and re-launch.
 
 ---
 
@@ -223,9 +224,9 @@ Please open an issue first for large changes.
 
 ## 🐛 Known Limitations
 
-- Windows only (x64) — Linux/macOS builds are not currently provided but Electron supports them
 - Private key authentication supports unencrypted PEM keys only (passphrase-protected keys not yet supported)
 - Split view is limited to 2 terminals side by side
+- `keytar` on Linux may require `libsecret-1-dev` (or equivalent) to build from source
 
 ---
 

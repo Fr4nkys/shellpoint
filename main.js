@@ -61,8 +61,8 @@ function createWindow() {
       nodeIntegration: true,
       backgroundThrottling: false,
     },
-    titleBarStyle: 'hidden',
-    titleBarOverlay: {
+    titleBarStyle: process.platform === 'linux' ? 'default' : 'hidden',
+    titleBarOverlay: process.platform === 'linux' ? false : {
       color: '#1e1e1e',
       symbolColor: '#ffffff',
       height: 35
