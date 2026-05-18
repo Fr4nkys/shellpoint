@@ -265,6 +265,6 @@ Found a bug? Open an [issue](https://github.com/Fr4nkys/shellpoint/issues) or po
 
 Built with ❤️ for the Check Point community
 
-**ShellPoint v1.0.8**
+**ShellPoint v1.0.9**
 
 </div>
