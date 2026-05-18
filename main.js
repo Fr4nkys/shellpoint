@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════════════╗
-// ║              ShellPoint — SSH Manager v1.0.8                 ║
+// ║              ShellPoint — SSH Manager v1.0.9                 ║
 // ║      Built for Check Point engineers, with ❤️               ║
 // ║                                                              ║
 // ║  Author : Alexandro Michel Davide                            ║
@@ -25,7 +25,26 @@ const store = new Store();
 const KEYTAR_SERVICE = 'ShellPoint';
 
 let mainWindow;
+let splashWindow;
 let sshSessions = {};
+
+function createSplash() {
+  splashWindow = new BrowserWindow({
+    width: 320,
+    height: 220,
+    frame: false,
+    resizable: false,
+    movable: true,
+    alwaysOnTop: true,
+    transparent: false,
+    backgroundColor: '#121212',
+    icon: path.join(__dirname, 'src/assets/logo.png'),
+    webPreferences: { nodeIntegration: false, contextIsolation: true },
+    skipTaskbar: true,
+  });
+  splashWindow.loadFile('src/splash.html');
+  splashWindow.center();
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -33,11 +52,14 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
+    show: false,                  // hidden until fully loaded
+    backgroundColor: '#121212',   // prevents the white flash
     icon: path.join(__dirname, 'src/assets/logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: false,
-      nodeIntegration: true
+      nodeIntegration: true,
+      backgroundThrottling: false,
     },
     titleBarStyle: 'hidden',
     titleBarOverlay: {
@@ -48,10 +70,23 @@ function createWindow() {
   });
 
   mainWindow.loadFile('src/index.html');
+
+  // Show main window and close splash once the page is ready
+  mainWindow.webContents.once('did-finish-load', () => {
+    setTimeout(() => {
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.close();
+        splashWindow = null;
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }, 300); // tiny delay so the splash bar animation completes gracefully
+  });
 }
 
 app.whenReady().then(() => {
-  createWindow();
+  createSplash();   // shows in ~100ms
+  createWindow();   // loads in background
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
