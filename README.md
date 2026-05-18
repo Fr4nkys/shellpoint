@@ -34,15 +34,30 @@
 
 ---
 
-## 🚀 Quick Start (Portable — No Install)
+## 🚀 Quick Start
 
+### Windows (Portable — No Install)
 1. Download `ShellPoint-v1.0.8-win-x64.zip` from [Releases](../../releases)
 2. Extract anywhere (Desktop, USB drive, etc.)
 3. Run `ShellPoint.exe`
-4. Click **+** to add your first firewall host
-5. Double-click any host to connect
 
-No Node.js, no setup, no admin rights needed.
+### Linux (AppImage & DEB)
+We provide two formats for Linux users:
+- **AppImage (Portable):**
+  1. Download `ShellPoint-v1.0.8-linux-x86_64.AppImage` from [Releases](../../releases)
+  2. Right-click → **Properties** → **Permissions** → Check **"Allow executing file as program"** (or `chmod +x ShellPoint...AppImage`)
+  3. Double-click to run.
+- **DEB (Debian/Ubuntu/Kali):**
+  1. Download `ShellPoint-v1.0.8-linux-amd64.deb`
+  2. Install via terminal: `sudo apt install ./ShellPoint-v1.0.8-linux-amd64.deb` (or double-click to use your Software Center).
+
+---
+
+## 🛠️ Usage
+1. Click **+** to add your first firewall host
+2. Double-click any host to connect
+
+No Node.js, no setup, no admin rights needed (for Portable/AppImage).
 
 ---
 
