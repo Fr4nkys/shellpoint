@@ -45,7 +45,9 @@
         },
         {
           "target": "zip",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "requestedExecutionLevel": "asInvoker",
@@ -62,17 +64,17 @@
     "linux": {
       "target": [
         "AppImage",
-        "deb",
-        "rpm"
+        "deb"
       ],
       "category": "Network",
-      "artifactName": "ShellPoint-v${version}-linux-${arch}.${ext}"
+      "artifactName": "ShellPoint-v${version}-linux-${arch}.${ext}",
+      "maintainer": "Privatefound <dmoroeuro@gmail.com>"
     },
     "compression": "maximum"
   },
   "author": {
-    "name": "Alexandro Michel Davide",
-    "email": "",
+    "name": "Privatefound",
+    "email": "dmoroeuro@gmail.com",
     "url": "https://franksec.com"
   },
   "license": "MIT",
