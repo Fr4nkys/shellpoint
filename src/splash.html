@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShellPoint</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #121212;
+      color: #cccccc;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+      -webkit-app-region: drag;
+    }
+
+    .logo {
+      margin-bottom: 20px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.7; }
+    }
+
+    .name {
+      font-size: 22px;
+      font-weight: 700;
+      color: #e0e0e0;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .sub {
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .loader {
+      width: 140px;
+      height: 3px;
+      background: #1e1e1e;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .loader-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #E51261, #ff1f76);
+      border-radius: 2px;
+      animation: load 1.6s ease-in-out forwards;
+      box-shadow: 0 0 8px rgba(229, 18, 97, 0.5);
+    }
+
+    @keyframes load {
+      0%   { width: 0%; }
+      30%  { width: 45%; }
+      60%  { width: 72%; }
+      85%  { width: 88%; }
+      100% { width: 95%; }
+    }
+
+    .version {
+      margin-top: 16px;
+      font-size: 10px;
+      color: #333;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <svg width="56" height="56" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M50 5 L93.3 30 L93.3 70 L50 95 L6.7 70 L6.7 30 Z"
+            stroke="#E51261" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M35 35 L50 50 L35 65"
+            stroke="#e0e0e0" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="55" y1="65" x2="70" y2="65"
+            stroke="#e0e0e0" stroke-width="7" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="name">ShellPoint</div>
+  <div class="sub">Check Point SSH Manager</div>
+
+  <div class="loader">
+    <div class="loader-bar"></div>
+  </div>
+
+  <div class="version">v1.0.9</div>
+</body>
+</html>

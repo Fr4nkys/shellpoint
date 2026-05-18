@@ -2,7 +2,7 @@ const cpGuides = [
   {
     category: "System & Health",
     links: [
-      { title: "Useful Commands for Troubleshooting", sk: "sk97638" },
+      { title: "Check Point Processes and Daemons", sk: "sk97638" },
       { title: "CPinfo utility - How to run", sk: "sk92739" },
       { title: "High CPU / Memory Diagnosis", sk: "sk98348" },
       { title: "Gaia OS Best Practices & TS", sk: "sk109141" },

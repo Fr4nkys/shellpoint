@@ -1,6 +1,6 @@
 {
   "name": "shellpoint",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Professional SSH manager and SFTP client built specifically for Check Point firewall engineers",
   "main": "main.js",
   "homepage": "https://github.com/Fr4nkys/shellpoint",
@@ -18,20 +18,50 @@
     "productName": "ShellPoint",
     "copyright": "© 2025 Alexandro Michel Davide — franksec.com",
     "icon": "src/assets/logo.png",
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node",
+      "**/keytar/**",
+      "**/ssh2/lib/protocol/crypto/**"
+    ],
     "files": [
       "main.js",
       "preload.js",
       "src/**/*",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "!node_modules/**/{test,tests,__tests__,spec,specs}/**",
+      "!node_modules/**/*.md",
+      "!node_modules/**/*.map",
+      "!node_modules/**/README*",
+      "!node_modules/**/CHANGELOG*",
+      "!node_modules/**/LICENCE*",
+      "!node_modules/**/LICENSE*"
     ],
     "win": {
       "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
         {
           "target": "zip",
           "arch": ["x64"]
         }
       ],
-      "artifactName": "ShellPoint-v${version}-win-x64.zip"
+      "artifactName": "ShellPoint-v${version}-win-x64-${ext}",
+      "requestedExecutionLevel": "asInvoker",
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "src/assets/logo.png",
+      "uninstallerIcon": "src/assets/logo.png",
+      "installerHeaderIcon": "src/assets/logo.png",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ShellPoint",
+      "license": "LICENSE"
     },
     "compression": "maximum"
   },

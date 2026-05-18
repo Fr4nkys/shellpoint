@@ -1269,6 +1269,7 @@ input:focus {
   background: #111;
 }
 
+/* 2-pane: each 50% */
 .split-pane {
   position: relative !important;
   flex: 1 1 50%;
@@ -1279,6 +1280,18 @@ input:focus {
   overflow: hidden;
 }
 .split-pane:last-child { border-right: none; }
+
+/* 3-pane: each 33.33% */
+.terminals-container.split-view-3 .split-pane { flex: 1 1 33.33%; }
+
+/* 4-pane: 2x2 grid */
+.terminals-container.split-view-4 {
+  flex-wrap: wrap;
+}
+.terminals-container.split-view-4 .split-pane {
+  flex: 1 1 calc(50% - 1px);
+  max-height: 50%;
+}
 
 .split-label {
   position: absolute;
@@ -1293,6 +1306,17 @@ input:focus {
   letter-spacing: 0.5px;
   text-transform: uppercase;
   user-select: none;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.split-label:hover {
+  background: #222;
+  color: var(--text-h);
+}
+.split-pane.split-active > .split-label {
+  background: #1e1e2e;
+  border-bottom-color: var(--accent);
+  color: var(--accent);
 }
 
 .btn-exit-split {
