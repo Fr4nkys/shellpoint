@@ -716,24 +716,96 @@ function sendCmd(cmdStr) {
 // =============================================
 // TABS / TERMINALS
 // =============================================
-async function openTab(host) {
-  if (activeTabs.find(t => t.id === host.id)) {
+async function openTab(host, forceNew = false) {
+  // If the host already has a session AND we are NOT forcing a new one,
+  // just switch to the existing one.
+  if (!forceNew && activeTabs.find(t => t.id === host.id)) {
     activateTab(host.id);
     return;
   }
+  // When opening a new (duplicate) session, mint a fresh unique id so the
+  // existing session is left untouched.
+  // IMPORTANT: save the original id BEFORE changing it — keytar stores the
+  // password under the original id, not the new session-scoped one.
+  const originalId = host.id;
+  if (forceNew && activeTabs.find(t => t.id === host.id)) {
+    const sessionSuffix = 'session_' + Date.now();
+    const sessionNum = activeTabs.filter(t => t.host && t.host.ip === host.ip).length + 1;
+    host = { ...host, id: host.id + '_' + sessionSuffix, _sessionLabel: host.name + ' #' + sessionNum };
+  }
 
-  // _qcPassword is set by Quick Connect flow (no keychain entry exists for temp hosts)
-  const password = host._qcPassword !== undefined ? host._qcPassword : await api.keytarGet(host.id);
+  // _qcPassword is set by Quick Connect flow (no keychain entry exists for temp hosts).
+  // Always resolve the password from the ORIGINAL host id so keytar finds it.
+  const password = host._qcPassword !== undefined ? host._qcPassword : await api.keytarGet(originalId);
+
+  const tabLabel = host._sessionLabel || host.name;
 
   const tabEl = document.createElement('div');
   tabEl.className = 'tab';
   tabEl.id = `tab-${host.id}`;
   tabEl.innerHTML = `
     <span class="tab-dot"></span>
-    <span class="tab-title">${host.name}</span>
+    <span class="tab-title">${tabLabel}</span>
     <span class="tab-close" title="Close">&times;</span>`;
   tabEl.onclick = () => activateTab(host.id);
   tabEl.querySelector('.tab-close').onclick = (e) => { e.stopPropagation(); closeTab(host.id); };
+
+  // Tab bar right-click context menu
+  tabEl.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('tab-ctx-menu')?.remove();
+    const other = activeTabs.filter(t => t.id !== host.id);
+    if (!other.length) return;
+    const tabCtx = document.createElement('div');
+    tabCtx.id = 'tab-ctx-menu';
+    tabCtx.className = 'term-ctx-menu';
+    // Build split submenu
+    const splitItems = other.map(t => `
+      <div class="ctx-item tab-ctx-split-item" data-split-id="${t.id}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+        Split with: ${t.host?._sessionLabel || t.host?.name || t.id}
+      </div>`).join('');
+    tabCtx.innerHTML = `
+      <div class="ctx-item" id="tab-ctx-new-session">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New session (same host)
+      </div>
+      <div class="ctx-separator"></div>
+      ${splitItems}
+      <div class="ctx-separator"></div>
+      <div class="ctx-item" id="tab-ctx-close" style="color:var(--accent);">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Close tab
+      </div>`;
+    document.body.appendChild(tabCtx);
+    const mW = tabCtx.offsetWidth || 240;
+    const mH = tabCtx.offsetHeight || 120;
+    let cx = e.clientX, cy = e.clientY;
+    if (cx + mW > window.innerWidth)  cx = window.innerWidth  - mW - 8;
+    if (cy + mH > window.innerHeight) cy = window.innerHeight - mH - 8;
+    tabCtx.style.left = cx + 'px';
+    tabCtx.style.top  = cy + 'px';
+    tabCtx.classList.add('visible');
+
+    tabCtx.querySelector('#tab-ctx-new-session').onclick = () => {
+      tabCtx.remove();
+      openTab(host, true);
+    };
+    tabCtx.querySelectorAll('.tab-ctx-split-item').forEach(item => {
+      item.onclick = () => {
+        tabCtx.remove();
+        openSplitView([host.id, item.dataset.splitId]);
+      };
+    });
+    tabCtx.querySelector('#tab-ctx-close').onclick = () => { tabCtx.remove(); closeTab(host.id); };
+
+    const dismiss = (ev) => {
+      if (!tabCtx.contains(ev.target)) { tabCtx.remove(); document.removeEventListener('mousedown', dismiss); }
+    };
+    setTimeout(() => document.addEventListener('mousedown', dismiss), 10);
+  });
+
   tabsBarEl.appendChild(tabEl);
 
   const wrapper = document.createElement('div');
@@ -803,7 +875,11 @@ async function openTab(host) {
       </div>
       <div class="ctx-item" id="ctx-duplicate">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        Duplicate session
+        New session (same host)
+      </div>
+      <div class="ctx-item" id="ctx-split-pick" ${activeTabs.length < 2 ? 'data-disabled="true"' : ''}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+        Split with tab…
       </div>
       <div class="ctx-separator"></div>
       <div class="ctx-item" id="ctx-clear">
@@ -857,10 +933,15 @@ async function openTab(host) {
         });
         term.writeln('\x1b[32m✓ Reconnected\x1b[0m\r\n');
         updateTabStatus(host.id, 'connected');
-        // Re-register data/resize handlers (old ones are still bound to the
-        // xterm instance, so this is safe — ssh-data IPC event is the real pipe)
-        term.onData(data => api.sshWrite(host.id, data));
-        term.onResize(({ cols, rows }) => api.sshResize(host.id, cols, rows));
+        // Dispose old listeners before re-attaching — otherwise every reconnect
+        // adds a NEW onData/onResize handler and each keystroke is sent N times.
+        const tabEntry = activeTabs.find(t => t.id === host.id);
+        if (tabEntry) {
+          tabEntry.dataDisposable?.dispose();
+          tabEntry.resizeDisposable?.dispose();
+          tabEntry.dataDisposable   = term.onData(data => api.sshWrite(host.id, data));
+          tabEntry.resizeDisposable = term.onResize(({ cols, rows }) => api.sshResize(host.id, cols, rows));
+        }
       } catch(err) {
         term.writeln(`\x1b[31m✗ Reconnect failed: ${err}\x1b[0m`);
         updateTabStatus(host.id, 'disconnected');
@@ -868,17 +949,43 @@ async function openTab(host) {
     };
     document.getElementById('ctx-duplicate').onclick = async () => {
       menu.remove();
-      // Pre-fetch the password using the ORIGINAL host.id before changing it,
-      // otherwise keytar won't find an entry for the new dup ID.
-      const password = host._qcPassword !== undefined
-        ? host._qcPassword
-        : await api.keytarGet(host.id);
-      const dupHost = {
-        ...host,
-        id: 'dup_' + host.id + '_' + Date.now(),
-        _qcPassword: password  // carry the password so openTab doesn't need keytar
+      openTab(host, true); // forceNew=true → mint a unique session id
+    };
+
+    document.getElementById('ctx-split-pick').onclick = () => {
+      menu.remove();
+      const others = activeTabs.filter(t => t.id !== host.id);
+      if (!others.length) return;
+      // Show a secondary picker menu
+      const picker = document.createElement('div');
+      picker.id = 'split-picker-menu';
+      picker.className = 'term-ctx-menu';
+      picker.innerHTML = others.map(t => `
+        <div class="ctx-item split-pick-item" data-id="${t.id}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+          ${t.host?._sessionLabel || t.host?.name || t.id}
+        </div>`).join('');
+      document.body.appendChild(picker);
+      // Position near the last menu
+      const pW = picker.offsetWidth || 220;
+      const pH = picker.offsetHeight || 80;
+      let px = menu.style.left ? parseInt(menu.style.left) + (menu.offsetWidth || 190) : e.clientX + 10;
+      let py = menu.style.top  ? parseInt(menu.style.top) : e.clientY;
+      if (px + pW > window.innerWidth)  px = window.innerWidth  - pW - 8;
+      if (py + pH > window.innerHeight) py = window.innerHeight - pH - 8;
+      picker.style.left = px + 'px';
+      picker.style.top  = py + 'px';
+      picker.classList.add('visible');
+      picker.querySelectorAll('.split-pick-item').forEach(item => {
+        item.onclick = () => {
+          picker.remove();
+          openSplitView([host.id, item.dataset.id]);
+        };
+      });
+      const dismissPicker = (ev) => {
+        if (!picker.contains(ev.target)) { picker.remove(); document.removeEventListener('mousedown', dismissPicker); }
       };
-      openTab(dupHost);
+      setTimeout(() => document.addEventListener('mousedown', dismissPicker), 10);
     };
 
     document.getElementById('ctx-clear').onclick = () => {
@@ -899,7 +1006,9 @@ async function openTab(host) {
 
   // Manual interception has been removed to fix the double-paste issue.
 
-  activeTabs.push({ id: host.id, host, term, fitAddon });
+  // Store disposables so we can remove listeners before re-attaching on reconnect
+  const tabEntry = { id: host.id, host, term, fitAddon, dataDisposable: null, resizeDisposable: null };
+  activeTabs.push(tabEntry);
 
   term.writeln(`\x1b[36mShellPoint\x1b[0m — Connecting to \x1b[33m${host.user}@${host.ip}:${host.port}\x1b[0m ...`);
 
@@ -924,8 +1033,8 @@ async function openTab(host) {
 
     term.writeln('\x1b[32m✓ Connected\x1b[0m\r\n');
     updateTabStatus(host.id, 'connected');
-    term.onData(data => api.sshWrite(host.id, data));
-    term.onResize(({ cols, rows }) => api.sshResize(host.id, cols, rows));
+    tabEntry.dataDisposable   = term.onData(data => api.sshWrite(host.id, data));
+    tabEntry.resizeDisposable = term.onResize(({ cols, rows }) => api.sshResize(host.id, cols, rows));
 
   } catch(err) {
     term.writeln(`\x1b[31m✗ Connection failed: ${err}\x1b[0m`);
@@ -1169,8 +1278,42 @@ async function loadSftpDirectory(dirPath) {
 
     setSftpStatus(`${list.length} items  —  ${dirPath}`);
   } catch(err) {
-    sftpFileList.innerHTML = `<div style="padding:20px;text-align:center;color:var(--accent);font-size:13px;">✗ ${err}</div>`;
-    setSftpStatus(`Error loading directory`);
+    const errStr = String(err);
+    // "Packet length XXXXXXX exceeds max length of 262144" is a well-known ssh2
+    // symptom: the server is sending ASCII text (e.g. a shell banner or login
+    // message) instead of binary SFTP protocol data.  This is NOT a ShellPoint
+    // bug — it is a server-side misconfiguration on the Gaia firewall.
+    const isPacketLengthError = /packet length \d+ exceeds max/i.test(errStr);
+
+    if (isPacketLengthError) {
+      sftpFileList.innerHTML = `
+        <div style="padding:24px 20px;color:var(--text-main);font-size:13px;line-height:1.7;max-width:480px;margin:0 auto;">
+          <div style="color:var(--accent);font-size:15px;font-weight:700;margin-bottom:12px;">
+            ⚠ SFTP subsystem not available on this host
+          </div>
+          <p style="margin-bottom:10px;">
+            The firewall is returning <strong>plain text</strong> instead of binary SFTP data.
+            This is a <strong>server-side issue</strong>, not a ShellPoint bug.
+          </p>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Likely causes on Gaia:</p>
+          <ul style="color:var(--text-muted);font-size:12px;padding-left:16px;margin-bottom:14px;line-height:2;">
+            <li>The SFTP subsystem is disabled in <code style="color:var(--blue);">/etc/ssh/sshd_config</code></li>
+            <li>The shell profile (<code style="color:var(--blue);">~/.bashrc</code> / <code style="color:var(--blue);">~/.profile</code>) prints text to stdout on login</li>
+            <li>The user's default shell is <code style="color:var(--blue);">clish</code> which does not support SFTP</li>
+          </ul>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Quick fix (run in terminal):</p>
+          <code style="display:block;background:#111;border:1px solid #333;border-radius:4px;padding:8px 12px;font-size:12px;color:var(--blue);white-space:pre;margin-bottom:6px;">grep -i sftp /etc/ssh/sshd_config</code>
+          <p style="font-size:11px;color:var(--text-dim);">
+            Make sure the line <code style="color:var(--blue);">Subsystem sftp /usr/lib/openssh/sftp-server</code> (or similar) is present and uncommented.
+          </p>
+          <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">Technical detail: ${errStr}</p>
+        </div>`;
+      setSftpStatus('✗ SFTP subsystem unavailable on this host');
+      showToast('SFTP not available — see panel for details', 'error');
+    } else {
+      sftpFileList.innerHTML = `<div style="padding:20px;text-align:center;color:var(--accent);font-size:13px;">✗ ${err}</div>`;
+      setSftpStatus(`Error loading directory`);
+    }
   }
 }
 
@@ -1828,69 +1971,87 @@ init();
 // =============================================
 // CLUSTER SPLIT SCREEN
 // =============================================
+// ── Cluster split (called from sidebar cluster button) ──────────────────────
 async function openClusterSplit(host1, host2) {
-  // Close any existing split
-  exitSplitView();
-
-  // Open both sessions if not already open
   if (!activeTabs.find(t => t.id === host1.id)) await openTab(host1);
   if (!activeTabs.find(t => t.id === host2.id)) await openTab(host2);
+  openSplitView([host1.id, host2.id]);
+  showToast(`Split: ${host1.name} | ${host2.name}`, 'info');
+}
 
-  // Apply split layout
+// ── Generic split view — accepts an array of 2–4 tab ids ────────────────────
+function openSplitView(ids) {
+  exitSplitView();
+
   const container = document.getElementById('terminals-container');
   container.classList.add('split-view');
-  splitView = { ids: [host1.id, host2.id] };
+  // Add a modifier class for 3 or 4 panes
+  if (ids.length === 3) container.classList.add('split-view-3');
+  if (ids.length === 4) container.classList.add('split-view-4');
+  splitView = { ids };
 
-  // Make both wrappers visible and half-width
+  // Hide all wrappers, then show only the split ones
   document.querySelectorAll('.terminal-wrapper').forEach(w => {
     w.classList.remove('active');
     w.style.display = 'none';
   });
-  const w1 = document.getElementById(`term-${host1.id}`);
-  const w2 = document.getElementById(`term-${host2.id}`);
-  if (w1) { w1.classList.add('split-pane'); w1.style.display = ''; }
-  if (w2) { w2.classList.add('split-pane'); w2.style.display = ''; }
 
-  // Add labels
-  [{ el: w1, host: host1 }, { el: w2, host: host2 }].forEach(({ el, host }) => {
-    if (!el) return;
-    let lbl = el.querySelector('.split-label');
+  ids.forEach(id => {
+    const w = document.getElementById(`term-${id}`);
+    if (!w) return;
+    w.classList.add('split-pane');
+    w.style.display = '';
+
+    // Label
+    let lbl = w.querySelector('.split-label');
     if (!lbl) {
       lbl = document.createElement('div');
       lbl.className = 'split-label';
-      el.insertBefore(lbl, el.firstChild);
+      w.insertBefore(lbl, w.firstChild);
     }
-    lbl.textContent = host.name;
+    const tab = activeTabs.find(t => t.id === id);
+    lbl.textContent = tab?.host?._sessionLabel || tab?.host?.name || id;
+
+    // Click label to set this pane as the focused/active one
+    lbl.onclick = () => {
+      currentTabId = id;
+      document.querySelectorAll('.split-pane').forEach(p => p.classList.remove('split-active'));
+      w.classList.add('split-active');
+      const t = activeTabs.find(x => x.id === id);
+      if (t) t.term.focus();
+    };
   });
 
-  // Show exit-split button
+  // Auto-activate first pane
+  const firstW = document.getElementById(`term-${ids[0]}`);
+  if (firstW) firstW.classList.add('split-active');
+
+  // Exit button
   let exitBtn = document.getElementById('btn-exit-split');
   if (!exitBtn) {
     exitBtn = document.createElement('button');
     exitBtn.id = 'btn-exit-split';
     exitBtn.className = 'btn-top btn-exit-split';
-    exitBtn.textContent = '[X] Exit Split';
     exitBtn.onclick = exitSplitView;
     document.querySelector('.tabs-actions').prepend(exitBtn);
   }
+  exitBtn.textContent = `[⊠] Exit Split (${ids.length})`;
   exitBtn.style.display = '';
 
-  // Fit both terminals
+  currentTabId = ids[0];
+
   setTimeout(() => {
-    splitView.ids.forEach(id => {
+    ids.forEach(id => {
       const t = activeTabs.find(x => x.id === id);
       if (t) t.fitAddon.fit();
     });
   }, 100);
-
-  currentTabId = host1.id;
-  showToast(`Split: ${host1.name} | ${host2.name}`, 'info');
 }
 
 function exitSplitView() {
   if (!splitView) return;
   const container = document.getElementById('terminals-container');
-  container.classList.remove('split-view');
+  container.classList.remove('split-view', 'split-view-3', 'split-view-4');
 
   document.querySelectorAll('.split-pane').forEach(w => {
     w.classList.remove('split-pane');
@@ -1900,7 +2061,6 @@ function exitSplitView() {
 
   splitView = null;
 
-  // Re-activate last tab
   if (activeTabs.length) activateTab(activeTabs[activeTabs.length - 1].id);
 
   const btn = document.getElementById('btn-exit-split');
