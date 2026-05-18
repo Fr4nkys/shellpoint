@@ -43,3 +43,4 @@ npm-debug.log*
 # Temp files
 *.tmp
 *.bak
+*.bat

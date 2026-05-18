@@ -48,16 +48,12 @@
           "arch": ["x64"]
         }
       ],
-      "artifactName": "ShellPoint-v${version}-win-x64-${ext}",
       "requestedExecutionLevel": "asInvoker",
       "verifyUpdateCodeSignature": false
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "installerIcon": "src/assets/logo.png",
-      "uninstallerIcon": "src/assets/logo.png",
-      "installerHeaderIcon": "src/assets/logo.png",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "ShellPoint",
